@@ -1,2 +1,2 @@
 # natsresttest
-Playing around with kotlin/ktor-nats-benthos
+Playing around with kotlin-nats
