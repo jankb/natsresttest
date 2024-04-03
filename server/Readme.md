@@ -1,6 +1,6 @@
 # Setup
 
-Used nats-server-v2.10.12-linux-386 
+Used (nats-server-v2.10.12-linux-386)[https://github.com/nats-io/nats-server/releases/download/v2.10.12/nats-server-v2.10.12-linux-386.tar.gz] 
 
 1. Start NATS server
 ```

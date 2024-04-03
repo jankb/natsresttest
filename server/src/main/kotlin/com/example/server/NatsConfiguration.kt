@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class NatsConfiguration {
-
     @Value("\${nats.server.url}")
     private lateinit var natsServerUrl: String
 
