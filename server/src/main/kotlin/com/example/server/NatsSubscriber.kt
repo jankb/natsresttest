@@ -5,6 +5,7 @@ import io.nats.client.JetStream
 import io.nats.client.Connection
 import io.nats.client.JetStreamSubscription
 import io.nats.client.PullSubscribeOptions
+import io.nats.client.api.ConsumerConfiguration
 import org.springframework.stereotype.Service
 import jakarta.annotation.PostConstruct
 import java.time.Duration
@@ -24,7 +25,13 @@ class NatsSubscriber(private val jetStream: JetStream, private val natsConnectio
         // Example from
         // https://github.com/nats-io/nats.java/blob/main/src/examples/java/io/nats/examples/jetstream/NatsJsPullSubBatchSize.java
 
+        val consumerConfig: ConsumerConfiguration = ConsumerConfiguration.builder()
+            .ackWait(Duration.ofMillis(2500))
+            .durable("voff-durable")
+            .build()
+
         val options: PullSubscribeOptions = PullSubscribeOptions.builder()
+            .configuration(consumerConfig)
             .build()
 
         val subscription: JetStreamSubscription = jetStream.subscribe(subject, options)
@@ -32,11 +39,52 @@ class NatsSubscriber(private val jetStream: JetStream, private val natsConnectio
 
         subscription.consumerInfo?.let {
             println("Server consumer is named: ${it.name}")
+            println("Consumerinfo: ${it}")
         }
 
-        subscription.pull(10)
-        subscription.nextMessage(Duration.ofSeconds(1))?.let {
-            println("Received message: ${String(it.data)}")
+
+       /* var read = 0
+        while (read < 10) {
+            subscription.fetch(10, Duration.ofSeconds(1)).forEach {
+                read++
+                println("Received message ($read): ${String(it.data)}")
+            }
+        }*/
+
+     /*   var read = 0
+        val numPending = subscription.consumerInfo.numPending.toInt()
+        while (read < numPending) {
+            subscription.iterate(numPending, Duration.ofSeconds(1)).forEach {
+                read++
+                println("[ITER] Received message ($read): ${String(it.data)}")
+            }
+        }*/
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+            println("Shutting down gracefully...")
+            natsConnection.close()
+        })
+
+        try {
+            while(!Thread.currentThread().isInterrupted) {
+                subscription.pull(10)
+                var message = subscription.nextMessage(Duration.ofSeconds(1))
+                while (message != null) {
+                    if (message.isJetStream) {
+                        println("Received message: ${String(message.data)}")
+                        message.ack()
+                    }
+                    message = subscription.nextMessage(Duration.ofSeconds(1))
+                }
+            }
+        } catch (e: InterruptedException) {
+            println("Interrupted, shutting down...")
+            Thread.currentThread().interrupt() // Preserve interrupt status
+        } catch (e: Exception) {
+            println("Error fetching messages: ${e.message}")
+            // Handle other exceptions
+        } finally {
+            natsConnection.close()
         }
 
     //    dispatcher.subscribe(subject)
