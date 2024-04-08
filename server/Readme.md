@@ -24,3 +24,14 @@ nats sub hello.world
 ```
 nats pub hello.world "Hi, there"
 ```
+
+## Build 
+Generate jar
+```
+gradlew assemble
+```
+
+Run jar
+```
+java -jar  build/libs/server-0.0.1-SNAPSHOT.jar --server.port=8081
+```
