@@ -26,8 +26,8 @@ class NatsSubscriber(private val jetStream: JetStream, private val natsConnectio
         // https://github.com/nats-io/nats.java/blob/main/src/examples/java/io/nats/examples/jetstream/NatsJsPullSubBatchSize.java
 
         val consumerConfig: ConsumerConfiguration = ConsumerConfiguration.builder()
-            .ackWait(Duration.ofMillis(2500))
-            .durable("voff-durable")
+            .ackWait(Duration.ofMillis(150))
+            .durable("voff2-durable")
             .build()
 
         val options: PullSubscribeOptions = PullSubscribeOptions.builder()
@@ -42,24 +42,6 @@ class NatsSubscriber(private val jetStream: JetStream, private val natsConnectio
             println("Consumerinfo: ${it}")
         }
 
-
-       /* var read = 0
-        while (read < 10) {
-            subscription.fetch(10, Duration.ofSeconds(1)).forEach {
-                read++
-                println("Received message ($read): ${String(it.data)}")
-            }
-        }*/
-
-     /*   var read = 0
-        val numPending = subscription.consumerInfo.numPending.toInt()
-        while (read < numPending) {
-            subscription.iterate(numPending, Duration.ofSeconds(1)).forEach {
-                read++
-                println("[ITER] Received message ($read): ${String(it.data)}")
-            }
-        }*/
-
         Runtime.getRuntime().addShutdownHook(Thread {
             println("Shutting down gracefully...")
             natsConnection.close()
@@ -68,13 +50,14 @@ class NatsSubscriber(private val jetStream: JetStream, private val natsConnectio
         try {
             while(!Thread.currentThread().isInterrupted) {
                 subscription.pull(10)
-                var message = subscription.nextMessage(Duration.ofSeconds(1))
+                //var message = subscription.nextMessage(Duration.ofSeconds(60))
+                var message = subscription.nextMessage(100)
                 while (message != null) {
                     if (message.isJetStream) {
                         println("Received message: ${String(message.data)}")
                         message.ack()
                     }
-                    message = subscription.nextMessage(Duration.ofSeconds(1))
+                    message = subscription.nextMessage(100)
                 }
             }
         } catch (e: InterruptedException) {
@@ -84,6 +67,7 @@ class NatsSubscriber(private val jetStream: JetStream, private val natsConnectio
             println("Error fetching messages: ${e.message}")
             // Handle other exceptions
         } finally {
+
             natsConnection.close()
         }
 
