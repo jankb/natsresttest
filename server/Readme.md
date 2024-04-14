@@ -25,7 +25,7 @@ nats sub hello.world
 nats pub hello.world "Hi, there"
 ```
 
-6. Trouble shooting
+## Trouble shooting
 In case of:
 ```
 $nats server info
