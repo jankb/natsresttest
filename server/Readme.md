@@ -25,6 +25,46 @@ nats sub hello.world
 nats pub hello.world "Hi, there"
 ```
 
+6. Trouble shooting
+In case of:
+```
+$nats server info
+nats: error: no results received, ensure the account used has system privileges and appropriate permissions
+```
+It appears that you need to set a system account.
+Create a config file (server.conf) for the server that contains a system user:
+```
+accounts: {
+  SYS: {
+    users: [{user: sys, password: pass}]
+  }
+}
+system_account: SYS
+```
+Start the jetstream server with:
+```
+./nats-server --js -VV -c server.conf
+```
+Then run:
+```
+nats server info --user sys --password pass
+```
+
+Not having to enter username and password every time there are a couple of options.
+
+Set environment variables:
+```
+export NATS_USER=sys
+export NATS_PASSWORD=pass
+```
+
+Save to context file (~/home/user/.config/nats/config)
+```
+nats context save relevantcontext --user sys --password pass
+```
+
+You can also edit the relevant context file directly.
+
 ## Build 
 Generate jar
 ```
