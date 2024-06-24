@@ -26,4 +26,25 @@ Connect to runnint nats-box image:
 Pubish something:
 > nats pub demo "Hello"
 
+## RestNATSSserver, NATS setup
 
+Setup server
+> ./nats-server -js -c server.conf
+
+server.conf:
+```json
+accounts: {
+  SYS: {
+    users: [{user: sys, password:. pass}]
+    jetstream: enable
+  }
+}
+```
+Create a stream with subject 'provetaking.order'
+> nats stream add
+
+Post to endpoint
+> curl -X POST localhost:8082/message -d '{"message":"voff"}' -H "Content-Type: application/json"
+
+Publish to subject
+> nats pub provetaking.order "{"message":"bjeff"}" 
