@@ -47,4 +47,45 @@ Post to endpoint
 > curl -X POST localhost:8082/message -d '{"message":"voff"}' -H "Content-Type: application/json"
 
 Publish to subject
-> nats pub provetaking.order "{"message":"bjeff"}" 
+> nats pub provetaking.order "{"message":"bjeff"}"
+ 
+## Nats notes
+Starting nats-server jetstream
+> ./nats-server --js -V -c server.conf
+
+server.conf
+```
+accounts: {
+  SYS: {
+    users: [{user: sys, password: pass}]
+    jetstream: enable
+  }
+}
+```
+
+>NATS_USER=sys NATS_PASSWORD=pass nats server ls
+
+nats creds in same dir as running app.
+in .config/nats/context/file_for_relevantcontext.json:
+```json
+{
+  "description": "",
+  "url": "tls://<relevant_url>:4222",
+  "socks_proxy": "",
+  "token": "",
+  "user": "",
+  "password": "",
+  "creds": "nats.creds",
+  "nkey": "",
+  "cert": "",
+  "key": "",
+  "ca": "",
+  "nsc": "",
+  "jetstream_domain": "",
+  "jetstream_api_prefix": "",
+  "jetstream_event_prefix": "",
+  "inbox_prefix": "",
+  "user_jwt": "",
+  "color_scheme": ""
+}
+```
