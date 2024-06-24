@@ -31,15 +31,6 @@ Pubish something:
 Setup server
 > ./nats-server -js -c server.conf
 
-server.conf:
-```json
-accounts: {
-  SYS: {
-    users: [{user: sys, password:. pass}]
-    jetstream: enable
-  }
-}
-```
 Create a stream with subject 'provetaking.order'
 > nats stream add
 
