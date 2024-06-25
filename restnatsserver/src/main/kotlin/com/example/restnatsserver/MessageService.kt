@@ -1,20 +1,24 @@
 package com.example.restnatsserver
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.nats.client.Connection
 import io.nats.client.JetStream
 import io.nats.client.JetStreamSubscription
-import io.nats.client.PullSubscribeOptions
 import jakarta.annotation.PostConstruct
 import org.springframework.stereotype.Service
 
 @Service
-class MessageService(private val messageRepository: MessageRepository, private val natsConnection: Connection) {
+class MessageService(
+    private val messageRepository: MessageRepository,
+    // private val natsConnection: Connection,
+    private val conn: NatsConnectionManager,
+) {
     private lateinit var jetStream: JetStream
     private lateinit var subscription: JetStreamSubscription
 
     @PostConstruct
     fun init() {
-        jetStream = natsConnection.jetStream()
+        val sub1 = conn.subscribe("provetaking.order", 1)
+        val sub2 = conn.subscribe("provetaking.respons", 2)
+     /*   jetStream = natsConnection.jetStream()
 
         val pullSubscribeOptions =
             PullSubscribeOptions.builder()
@@ -35,6 +39,8 @@ class MessageService(private val messageRepository: MessageRepository, private v
                 }
             }
         }.start()
+
+      */
     }
 
     fun saveMessage(messageContent: String): Message {
