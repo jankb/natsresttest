@@ -1,4 +1,5 @@
 package com.example.restnatsserver
+
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.nats.client.JetStream
 import io.nats.client.JetStreamSubscription
@@ -16,31 +17,8 @@ class MessageService(
 
     @PostConstruct
     fun init() {
-        val sub1 = conn.subscribe("provetaking.order", 1)
-        val sub2 = conn.subscribe("provetaking.respons", 2)
-     /*   jetStream = natsConnection.jetStream()
-
-        val pullSubscribeOptions =
-            PullSubscribeOptions.builder()
-                .durable("message-group-2") // Durable name is necessary for pull subscriptions
-                .build()
-
-        subscription = jetStream.subscribe("provetaking.order", pullSubscribeOptions)
-
-        Thread {
-            while (true) {
-                val messages = subscription.fetch(10, 1000) // Adjust based on your throughput needs
-                for (message in messages) {
-                    val msg = String(message.data)
-                    println(msg)
-                    val savedMessage = saveMessage(msg)
-                    //   publishMessage(savedMessage)
-                    message.ack()
-                }
-            }
-        }.start()
-
-      */
+        val sub1 = conn.subscribe("provetaking.order")
+        val sub2 = conn.subscribe("provetaking.respons")
     }
 
     fun saveMessage(messageContent: String): Message {
