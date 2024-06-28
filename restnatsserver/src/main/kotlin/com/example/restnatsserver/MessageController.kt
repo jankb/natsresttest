@@ -7,9 +7,13 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+// curl -X POST localhost:8082/message -H "Content-type: application/json" -d '{"message":"333"}'
+
 @RestController
 @RequestMapping("/message")
-class MessageController(private val messageService: MessageService) {
+class MessageController(
+    private val messageService: MessageService,
+) {
     @PostMapping
     fun postMessage(
         @RequestBody message: Map<String, String>,

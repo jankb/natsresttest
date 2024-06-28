@@ -9,19 +9,26 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
+interface NATSPublishIf {
+    fun publishRequisition(requisition: String)
+
+    fun publishOrderReceipt(orderReceipt: String)
+}
+
+interface NatsSubscriberIf {
+    fun orderRequest(order: String): Boolean
+}
+
 @Component
-class NatsConnectionManager(
+class NATSSubscriber(
     private val natsConnection: Connection,
+    natsSubscriberIf: NatsSubscriberIf,
 ) {
-    private val logger = LoggerFactory.getLogger(NatsConfig::class.java)
     private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
-
     private val jetStream = natsConnection.jetStream()
+    private val logger = LoggerFactory.getLogger(NATSSubscriber::class.java)
 
-    fun subscribe(
-        subject: String,
-        // parser: (s: String) -> Unit,
-    ) {
+    init {
         val pullSubscribeOptions =
             PullSubscribeOptions
                 .builder()
@@ -34,20 +41,23 @@ class NatsConnectionManager(
                 scheduler.scheduleAtFixedRate({
                     if (natsConnection.status == Connection.Status.CONNECTED) {
                         val messages = subscription.fetch(10, 1000)
-                        println("Messages ${messages.size}")
                         messages?.forEach { message ->
-                            message?.takeIf { it.isJetStream && it.subject == subject }?.let {
-                                //  println("$subject Value " + parser!!::class.simpleName)
-                                //  parser(String(message.data))
-                                println("Subject ${it.subject} " + String(message.data))
-                                it.ack()
-                            }
+                            message
+                                ?.takeIf {
+                                    it.isJetStream
+                                }?.let {
+                                    if (it.subject == "provetaking.order") {
+                                        if (natsSubscriberIf.orderRequest(String(message.data))) {
+                                            it.ack()
+                                        }
+                                    }
+                                }
                         }
                     }
                 }, 0, 1, TimeUnit.SECONDS)
             }
         } catch (e: Exception) {
-            logger.error("Unable to subscribe to $subject. ${e.message}")
+            logger.error("Unable to subscribe to stream. ${e.message}")
         }
     }
 
@@ -55,9 +65,21 @@ class NatsConnectionManager(
     fun cleanUp() {
         scheduler.shutdownNow()
     }
+}
 
-    fun doStuff(function: (s: String) -> Unit) {
-        val name = "Name in function"
-        function(name)
+@Component
+class NATSPublisher(
+    private val natsConnection: Connection,
+) : NATSPublishIf {
+    private val logger = LoggerFactory.getLogger(NATSPublisher::class.java)
+
+    override fun publishOrderReceipt(orderReceipt: String) {
+        val subject = "provetaking.respons"
+        logger.info("Publishing message to subject $subject : $orderReceipt")
+        natsConnection.publish(subject, orderReceipt.toByteArray())
+    }
+
+    override fun publishRequisition(requisition: String) {
+        println("natsConnection.publish(\"provetaking.order\", requisition.toByteArray())")
     }
 }
