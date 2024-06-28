@@ -1,6 +1,8 @@
 package com.example.restnatsserver
 
 import io.nats.client.Connection
+import io.nats.client.Message
+import io.nats.client.MessageHandler
 import io.nats.client.PullSubscribeOptions
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
@@ -13,10 +15,20 @@ interface NATSPublishIf {
     fun publishRequisition(requisition: String)
 
     fun publishOrderReceipt(orderReceipt: String)
+
+    fun timeReply(
+        time: String,
+        replySubject: String,
+    )
 }
 
 interface NatsSubscriberIf {
     fun orderRequest(order: String): Boolean
+
+    fun timeRequest(
+        myvalue: String,
+        replySubject: String,
+    )
 }
 
 @Component
@@ -81,5 +93,34 @@ class NATSPublisher(
 
     override fun publishRequisition(requisition: String) {
         println("natsConnection.publish(\"provetaking.order\", requisition.toByteArray())")
+    }
+
+    override fun timeReply(
+        time: String,
+        replySubject: String,
+    ) {
+        logger.info("Sending reply on subject $replySubject, $time")
+        natsConnection.publish(replySubject, time.toByteArray())
+    }
+}
+
+@Component
+class NATSRequestReply(
+    natsConnection: Connection,
+    private val natsSubscriberIf: NatsSubscriberIf,
+) : MessageHandler {
+    private val logger = LoggerFactory.getLogger(NATSRequestReply::class.java)
+
+    init {
+        val dispatcher = natsConnection.createDispatcher(this)
+        dispatcher.subscribe("timeRequest")
+        logger.info("Subscribed to timeRequest.")
+    }
+
+    override fun onMessage(msg: Message?) {
+        msg?.let {
+            logger.info("Got Request : ${String(msg.data)}")
+            natsSubscriberIf.timeRequest(String(msg.data), msg.replyTo)
+        }
     }
 }

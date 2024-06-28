@@ -2,6 +2,8 @@ package com.example.restnatsserver
 
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
+import java.util.*
 
 @Service
 class MessageService(
@@ -20,6 +22,15 @@ class MessageService(
         logger.info("Got some order to handel, $order")
         publisher.publishOrderReceipt("Got IT.")
         return true
+    }
+
+    override fun timeRequest(
+        myvalue: String,
+        replySubject: String,
+    ) {
+        val sdf = LocalDateTime.now()
+        val reply = "$myvalue $sdf"
+        publisher.timeReply(reply, replySubject)
     }
 
     fun getMessage(id: Long): Message? = messageRepository.findById(id).orElse(null)
