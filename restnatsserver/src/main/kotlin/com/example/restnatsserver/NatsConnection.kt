@@ -33,25 +33,25 @@ interface NatsSubscriberIf {
 
 @Component
 class NATSSubscriber(
-    private val natsConnection: Connection,
+    private val natsConnection: Connection?,
     natsSubscriberIf: NatsSubscriberIf,
 ) {
     private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
-    private val jetStream = natsConnection.jetStream()
+    private val jetStream = natsConnection?.jetStream()
     private val logger = LoggerFactory.getLogger(NATSSubscriber::class.java)
 
     init {
         val pullSubscribeOptions =
             PullSubscribeOptions
                 .builder()
-                .stream("bjeff")
+                .stream("jk-test")
                 .durable("consumer-1") // Durable name is necessary for pull subscriptions
                 .build()
 
         try {
-            jetStream.subscribe(null, pullSubscribeOptions)?.let { subscription ->
+            jetStream?.subscribe(null, pullSubscribeOptions)?.let { subscription ->
                 scheduler.scheduleAtFixedRate({
-                    if (natsConnection.status == Connection.Status.CONNECTED) {
+                    if (natsConnection?.status == Connection.Status.CONNECTED) {
                         val messages = subscription.fetch(10, 1000)
                         messages?.forEach { message ->
                             message
@@ -81,14 +81,16 @@ class NATSSubscriber(
 
 @Component
 class NATSPublisher(
-    private val natsConnection: Connection,
+    private val natsConnection: Connection?,
 ) : NATSPublishIf {
     private val logger = LoggerFactory.getLogger(NATSPublisher::class.java)
 
     override fun publishOrderReceipt(orderReceipt: String) {
         val subject = "provetaking.respons"
-        logger.info("Publishing message to subject $subject : $orderReceipt")
-        natsConnection.publish(subject, orderReceipt.toByteArray())
+        natsConnection?.let {
+            it.publish(subject, orderReceipt.toByteArray())
+            logger.info("Publishing message to subject $subject : $orderReceipt")
+        }
     }
 
     override fun publishRequisition(requisition: String) {
@@ -99,22 +101,27 @@ class NATSPublisher(
         time: String,
         replySubject: String,
     ) {
-        logger.info("Sending reply on subject $replySubject, $time")
-        natsConnection.publish(replySubject, time.toByteArray())
+        natsConnection?.let {
+            logger.info("Sending reply on subject $replySubject, $time")
+            it.publish(replySubject, time.toByteArray())
+        }
     }
 }
 
 @Component
 class NATSRequestReply(
-    natsConnection: Connection,
+    natsConnection: Connection?,
     private val natsSubscriberIf: NatsSubscriberIf,
 ) : MessageHandler {
     private val logger = LoggerFactory.getLogger(NATSRequestReply::class.java)
 
     init {
-        val dispatcher = natsConnection.createDispatcher(this)
-        dispatcher.subscribe("timeRequest")
-        logger.info("Subscribed to timeRequest.")
+         natsConnection?.let { connection ->
+            connection.createDispatcher(this).let { dispatcher ->
+                dispatcher.subscribe("timeRequest")
+                logger.info("Subscribed to timeRequest.")
+            }
+        }
     }
 
     override fun onMessage(msg: Message?) {

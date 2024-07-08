@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration
 class NatsConfig {
     private val logger = LoggerFactory.getLogger(NatsConfig::class.java)
 
+    private val url = "nats://localhost:4222"
     // fun natsConnection(): Connection = Nats.connect("nats://localhost:4222")
     @Bean
     fun natsConnection(): Connection? =
@@ -18,12 +19,12 @@ class NatsConfig {
             Nats.connect(
                 Options
                     .builder()
-                    .server("nats://localhost:4222")
+                    .server(url)
                     .userInfo("sys", "pass")
                     .build(),
             )
         } catch (e: Exception) {
-            logger.error("\"Unable to create NATS connection.", e)
+            logger.warn("Unable to create NATS connection to $url.")
             null
         }
 }
